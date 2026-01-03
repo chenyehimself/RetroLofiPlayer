@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Retro Audio Player – Foldable UI</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- p5 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+</head>
+<body>
+  <!-- 极光背景：永远在最底层（z:-2），位于 body 渐变之上、canvas 之下 -->
+  <div id="aurora-bg" aria-hidden="true"></div>
+
+  <!-- 折叠面板：遮罩 -->
+  <div id="drawer-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+  <!-- 右上角齿轮（默认收起） -->
+  <button id="drawer-toggle" class="panel-toggle" aria-controls="upper-controls" aria-expanded="false" title="Show controls (H)">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path fill="currentColor" d="M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm9 3.5c0-.53-.06-1.05-.17-1.54l2.1-1.64a.75.75 0 0 0 .17-.98l-2-3.46a.75.75 0 0 0-.93-.33l-2.48 1a8.1 8.1 0 0 0-2.64-1.53l-.37-2.6A.75.75 0 0 0 9.7 1.1l-3.99.46a.75.75 0 0 0-.65.7l-.12 2.67A8.2 8.2 0 0 0 2.6 6.5l-2.3-.94a.75.75 0 0 0-.95.34L.06 9.4c.14.32.43.55.77.6l2.62.36c.1.5.27.98.5 1.44l-1.69 2.1a.75.75 0 0 0 .02.98l2.67 3.02c.26.29.68.36 1.02.16l2.3-1.32c.41.26.85.48 1.31.65l.27 2.66c.04.37.34.66.71.69l4.05.35c.41.03.78-.24.86-.64l.55-2.62c.47-.18.92-.41 1.34-.67l2.37 1.22c.34.18.76.1 1.01-.2l2.47-3.06a.75.75 0 0 0 .01-.95l-1.8-2.15c.2-.47.35-.96.44-1.47l2.62-.34c.37-.05.66-.33.73-.69l.7-4.03a.75.75 0 0 0-.47-.83l-2.52-.97a8.3 8.3 0 0 0-1.76-1.86l.32-2.63a.75.75 0 0 0-.64-.83l-4.03-.54a.75.75 0 0 0-.82.63l-.42 2.62A8.15 8.15 0 0 0 12 3.5" />
+    </svg>
+  </button>
+
+  <!-- 顶部控制面板（默认收起） -->
+  <div id="upper-controls">
+    <input type="file" id="fileInput" accept="audio/*" />
+
+    <div class="slider">
+      <label>Speed: <span id="speedDisplay">1.0x</span></label>
+      <input type="range" id="speed" min="0.5" max="2" value="1" step="0.1" />
+    </div>
+
+    <div class="slider">
+      <label>Volume: <span id="volumeDisplay">1.0</span></label>
+      <input type="range" id="volume" min="0" max="1" value="1" step="0.05" />
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Lo-Fi 复古拨杆 -->
+    <label class="retro-switch">
+      <input type="checkbox" id="lofi-enable" checked />
+      <span class="retro-base">
+        <span class="retro-lever"></span>
+        <span class="retro-lamp"></span>
+      </span>
+      <span class="retro-text">Lo-Fi</span>
+    </label>
+
+    <div class="slider">
+      <label>Cutoff: <span id="lofi-cutoff-display">20000 Hz</span></label>
+      <input type="range" id="lofi-cutoff" min="20" max="20000" value="20000" step="10" />
+    </div>
+    <div class="slider">
+      <label>Reso: <span id="lofi-reso-display">0.1 Q</span></label>
+      <input type="range" id="lofi-reso" min="0.001" max="10" value="0.1" step="0.001" />
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Reverb 复古拨杆 -->
+    <label class="retro-switch">
+      <input type="checkbox" id="rvb-enable" />
+      <span class="retro-base">
+        <span class="retro-lever"></span>
+        <span class="retro-lamp"></span>
+      </span>
+      <span class="retro-text">Reverb</span>
+    </label>
+
+    <div class="slider">
+      <label>Mix: <span id="rvb-mix-display">0.18</span></label>
+      <input type="range" id="rvb-mix" min="0" max="1" value="0.18" step="0.01" />
+    </div>
+    <div class="slider">
+      <label>Room: <span id="rvb-room-display">2.2 s</span></label>
+      <input type="range" id="rvb-room" min="0.1" max="6" value="2.2" step="0.1" />
+    </div>
+    <div class="slider">
+      <label>Decay: <span id="rvb-decay-display">2.5</span></label>
+      <input type="range" id="rvb-decay" min="0.5" max="8" value="2.5" step="0.1" />
+    </div>
+  </div>
+
+  <!-- 底部播放区 -->
+  <div id="bottom-controls">
+    <button id="pause-play" class="amp-btn" aria-label="Play" data-state="paused">
+      <svg class="icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+        <polygon class="icon-play" points="8,5 19,12 8,19" />
+        <g class="icon-pause">
+          <rect x="7" y="5" width="4" height="14" rx="1.2"></rect>
+          <rect x="13" y="5" width="4" height="14" rx="1.2"></rect>
+        </g>
+      </svg>
+    </button>
+
+    <input type="range" id="progress" class="progress-range" min="0" max="1" value="0" step="0.001" />
+    <p class="progress-text"><span id="progressDisplay">0:00 / 0:00</span></p>
+  </div>
+
+  <script src="sketch.js"></script>
+</body>
+</html>

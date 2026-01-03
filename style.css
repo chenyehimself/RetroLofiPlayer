@@ -1,0 +1,241 @@
+:root{
+  --amber: #FFB85C;
+  --amber-soft: rgba(255,184,92,0.6);
+  --panel: rgba(40,16,48,0.72);
+  --panel-strong: rgba(40,16,48,0.9);
+  --text: #EDE8F5;
+  --muted: #CFC6D9;
+}
+
+*{ box-sizing: border-box; }
+html,body{ height:100%; margin:0; }
+
+body{
+  /* 仍用当前这版深紫背景；若要换为“psycho pt2”那套，之后再切 */
+  background: linear-gradient(to bottom, #4B0082 0%, #6A0DAD 100%);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+
+/* 齿轮按钮 */
+.panel-toggle{
+  position: fixed;
+  top: 18px; right: 18px; z-index: 10;
+  width: 44px; height: 44px; border-radius: 999px;
+  color: #FFEAD0;
+  border:1px solid rgba(255,184,92,.55);
+  background:
+    radial-gradient(120% 120% at 35% 30%, rgba(255,255,255,.06), rgba(0,0,0,.0) 65%),
+    linear-gradient(#2c1236,#1b0b22);
+  box-shadow: 0 0 12px rgba(255,184,92,.35), inset 0 0 12px rgba(255,255,255,.06);
+  display:grid; place-items:center; cursor:pointer;
+  transition: transform .15s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+}
+.panel-toggle:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(255,184,92,.5), inset 0 0 14px rgba(255,255,255,.08);
+  border-color: rgba(255,184,92,.85);
+}
+.panel-toggle:focus-visible{ outline: 2px solid #FFEAD0; outline-offset: 2px; }
+
+/* 遮罩 */
+.drawer-backdrop{
+  position: fixed; inset: 0; z-index: 4;
+  background: rgba(0,0,0,.25);
+  backdrop-filter: blur(1px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+.drawer-backdrop.open{ opacity:1; pointer-events:auto; }
+
+/* 顶部控制面板（默认收起） */
+#upper-controls{
+  position: fixed; z-index: 5;
+  top: 18px; left: 50%;
+  transform: translate(-50%, -140%) scale(.98);
+  opacity: 0; pointer-events: none;
+
+  display:flex; align-items:center; gap:14px; flex-wrap: wrap;
+  background: var(--panel);
+  padding:10px 16px;
+  border-radius:12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(6px);
+
+  transition: transform .35s cubic-bezier(.22,.61,.36,1), opacity .25s ease;
+}
+#upper-controls.open{
+  transform: translate(-50%, 0) scale(1);
+  opacity: 1; pointer-events: auto;
+}
+
+.slider{ display:flex; align-items:center; gap:8px; }
+label{ font-size:13px; color: var(--muted); }
+.progress-text{ margin:0; font-size:13px; color: var(--muted); }
+.divider{ width:1px; height:28px; background: rgba(255,255,255,.12); margin:0 8px; }
+
+input[type="file"]{
+  padding:8px 10px;
+  background: var(--panel-strong);
+  color: var(--text);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:8px; cursor:pointer;
+}
+
+input[type="range"]{
+  -webkit-appearance:none; appearance:none;
+  width:120px; height:4px; background:rgba(255,255,255,.15); border-radius:4px;
+  outline:none; cursor:pointer;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:16px; height:16px; border-radius:50%;
+  background: var(--amber);
+  border: 1px solid rgba(0,0,0,.2);
+  box-shadow: 0 0 0 2px rgba(255,184,92,.25);
+  margin-top:-6px;
+}
+
+/* 底部播放区（抬高层级，盖住遮罩） */
+#bottom-controls{
+  position: absolute; left:50%; transform: translateX(-50%);
+  bottom:18px; z-index: 6;
+  display:flex; align-items:center; gap:14px;
+  background: var(--panel);
+  padding:10px 16px;
+  border-radius:12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(6px);
+}
+.progress-range{ width:520px; }
+
+/* p5 画布在极光之上（-1 > -2） */
+canvas{ position:absolute; inset:0; z-index:-1; }
+
+/* 播放按钮（老功放） */
+.amp-btn{
+  width:64px; height:64px; border-radius:50%;
+  display:grid; place-items:center;
+  border: 2px solid var(--amber-soft);
+  background:
+    radial-gradient(120% 120% at 35% 30%, rgba(255,255,255,.06), rgba(0,0,0,.0) 65%),
+    linear-gradient(#2c1236,#1b0b22);
+  box-shadow: 0 0 10px rgba(255,184,92,.35), inset 0 0 12px rgba(255,255,255,.06);
+  color: var(--text); cursor:pointer;
+  transition: transform .15s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+}
+.amp-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(255,184,92,.5), inset 0 0 14px rgba(255,255,255,.08);
+  border-color: rgba(255,184,92,.85);
+}
+.amp-btn:active{ transform: scale(.98); }
+.amp-btn .icon{ fill:none; stroke: #FFEAD0; stroke-width:2.2; }
+.amp-btn .icon-play{ opacity:1; transition:opacity .18s ease; }
+.amp-btn .icon-pause{ opacity:0; transition:opacity .18s ease; }
+.amp-btn.playing .icon-play{ opacity:0; }
+.amp-btn.playing .icon-pause{ opacity:1; }
+.amp-btn.playing{ animation: amberPulse 1.6s ease-in-out infinite; }
+@keyframes amberPulse{
+  0%,100%{ box-shadow: 0 0 10px rgba(255,184,92,.35), inset 0 0 12px rgba(255,255,255,.06); }
+  50%{    box-shadow: 0 0 14px rgba(255,184,92,.55), inset 0 0 14px rgba(255,255,255,.08); }
+}
+
+/* ============ 复古拨杆开关 ============ */
+.retro-switch{
+  display:flex; align-items:center; gap:8px;
+  cursor:pointer; user-select:none;
+}
+.retro-switch input{
+  position:absolute; opacity:0; width:0; height:0; /* 隐藏原生checkbox */
+}
+.retro-switch .retro-base{
+  position: relative;
+  width: 58px; height: 28px; border-radius: 8px;
+  border:1px solid rgba(255,255,255,.15);
+  background:
+    radial-gradient(140% 120% at 30% 20%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%),
+    linear-gradient(#2c1236,#1b0b22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -2px 6px rgba(0,0,0,.35);
+}
+.retro-switch .retro-lever{
+  position:absolute; left:50%; bottom:4px; transform:translateX(-50%) rotate(-22deg);
+  transform-origin: bottom center;
+  width: 2px; height: 18px;
+  background: linear-gradient(#EDEDED, #AFAFAF);
+  border-radius: 2px;
+  transition: transform .18s ease;
+}
+.retro-switch .retro-lever::after{
+  content:""; position:absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #FFFFFF, #DADADA 40%, #9C9C9C 100%);
+  box-shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+.retro-switch .retro-lamp{
+  position:absolute; right:6px; top:6px; width:8px; height:8px; border-radius:50%;
+  background: rgba(255,184,92,.25);
+  box-shadow: 0 0 0 rgba(255,184,92,0);
+  transition: background .18s ease, box-shadow .18s ease;
+}
+
+/* 选中态：拨杆向右、指示灯琥珀发光 */
+.retro-switch input:checked + .retro-base .retro-lever{
+  transform: translateX(-50%) rotate(22deg);
+}
+.retro-switch input:checked + .retro-base .retro-lamp{
+  background: rgba(255,184,92,.95);
+  box-shadow: 0 0 8px rgba(255,184,92,.8), 0 0 16px rgba(255,184,92,.35);
+}
+.retro-switch .retro-text{
+  font-size: 13px; color: var(--muted);
+}
+
+/* 键盘可达性：给隐藏checkbox代理focus样式 */
+.retro-switch input:focus-visible + .retro-base{
+  outline: 2px solid #FFEAD0; outline-offset: 2px;
+}
+
+/* 小屏适配 */
+@media (max-width: 680px){
+  #upper-controls{
+    left: 50%;
+    transform: translate(-50%, 120%) scale(.98);
+    bottom: 18px; top: auto;
+  }
+  #upper-controls.open{
+    transform: translate(-50%, 0) scale(1);
+    bottom: 18px;
+  }
+  .progress-range{ width: 62vw; }
+}
+
+/* ===== Aurora Flow Background（更底层） ===== */
+#aurora-bg{
+  position: fixed; inset: 0; z-index: -2; /* 低于 canvas(-1)，高于 body 背景 */
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 10% 20%, rgba(255,184,92,.22), transparent 60%),
+    radial-gradient(90% 70% at 80% 0%, rgba(255,234,208,.12), transparent 60%),
+    radial-gradient(120% 90% at 70% 80%, rgba(154,72,255,.18), transparent 60%),
+    linear-gradient(to bottom, #4B0082 0%, #6A0DAD 100%);
+  filter: blur(22px) saturate(1.15);
+  animation: auroraShift 18s ease-in-out infinite alternate;
+  transform: translateZ(0);
+}
+@keyframes auroraShift{
+  0%   { filter: hue-rotate(0deg)   blur(22px) saturate(1.10); background-position: 0% 0%, 0% 0%, 0% 0%; }
+  50%  { filter: hue-rotate(-8deg)  blur(24px) saturate(1.20); background-position: 30% 10%, 10% 0%, 0% 20%; }
+  100% { filter: hue-rotate(6deg)   blur(26px) saturate(1.25); background-position: 60% 20%, 20% 0%, 0% 40%; }
+}
+/* 有电平时：由 sketch.js 的小挂钩注入 .has-level */
+body.has-level #aurora-bg{
+  animation-duration: 14s;
+  filter: hue-rotate(2deg) blur(24px) saturate(1.25) brightness(1.05);
+}
+/* 无障碍：减少动效 */
+@media (prefers-reduced-motion: reduce){
+  #aurora-bg{ animation-duration: 40s; }
+}
